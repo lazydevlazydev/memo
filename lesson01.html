@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Git Master - レッスン1</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>🌱 レッスン1: 始まりの合図</h1>
+    
+    <div class="container">
+        <div class="scenario-card">
+            <span class="badge">STEP 1</span>
+            <h2>リポジトリを初期化しよう</h2>
+            <p>あなたは新しいプロジェクトフォルダを作成しました。まずはこのフォルダをGitで管理できるように、<strong>初期化</strong>のコマンドを実行してください。</p>
+            
+            <div class="terminal">
+                <div class="terminal-output" id="term-output">/project$ </div>
+                <div class="input-line">
+                    <span class="prompt">$</span>
+                    <input type="text" class="cmd-input" id="term-input" placeholder="コマンドを入力..." autofocus>
+                </div>
+            </div>
+            
+            <div class="nav-links">
+                <a href="index.html">← 目次に戻る</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="git_core.js"></script>
+    <script>
+        const input = document.getElementById('term-input');
+        const output = document.getElementById('term-output');
+        
+        // レッスンごとの進行状態
+        let step = 1; 
+
+        input.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter') return;
+            
+            const cmdText = input.value.trim();
+            if (!cmdText) return;
+            
+            // 入力されたコマンドを画面に表示
+            appendTerminalLog(output, `$ ${cmdText}`);
+            input.value = '';
+
+            // 共通ロジックでGitコマンドを処理
+            const result = executeGitCommand(cmdText);
+            
+            // 結果に応じたクラス（色）を付けて画面に表示
+            let cssClass = '';
+            if (result.type === 'error') cssClass = 'error-msg';
+            if (result.type === 'success') cssClass = 'success-msg';
+            if (result.type === 'info') cssClass = 'info-msg';
+            
+            appendTerminalLog(output, result.text, cssClass);
+
+            // --- レッスン固有のクリア判定ロジック ---
+            
+            // STEP 1 のクリア判定 (git init)
+            if (step === 1 && gitState.initialized) {
+                step = 2;
+                appendTerminalLog(output, "\n🎉 STEP 1 CLEAR! Gitの管理が始まりました。", "success-msg");
+                appendTerminalLog(output, "\n【次の課題】\n今の履歴（ログ）はどうなっているでしょうか？履歴を確認するコマンドを実行して、出力結果を見てみましょう。", "info-msg");
+            }
+            
+            // STEP 2 のクリア判定 (git log)
+            // ※ git logを打つと、コミットがないのでエラー（fatal）が返るが、それがこのレッスンの正解。
+            if (step === 2 && cmdText === 'git log') {
+                appendTerminalLog(output, "\n🎉 STEP 2 CLEAR! 素晴らしい！", "success-msg");
+                appendTerminalLog(output, "💡 解説: 初期化した直後はまだセーブデータ（コミット）が一つもないため、「コミットがまだありませんよ」というエラーが出るのが正常な動作です。これがGitのリアルな挙動です！", "info-msg");
+                step = 3; // クリア済み
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+:root {
+    --bg-color: #0d1117;
+    --card-bg: #161b22;
+    --border-color: #30363d;
+    --text-color: #c9d1d9;
+    --accent-color: #f05032;
+    --green: #2ea043;
+    --console-bg: #000000;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+h1, h2 { color: #fff; margin-bottom: 5px; }
+.subtitle { color: #8b949e; margin-bottom: 25px; }
+.container { width: 100%; max-width: 800px; }
+
+/* メニュー用 */
+.menu-list { list-style: none; padding: 0; }
+.menu-list li { margin-bottom: 10px; }
+.menu-list a {
+    display: block;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 15px 20px;
+    border-radius: 8px;
+    color: #58a6ff;
+    text-decoration: none;
+    font-weight: bold;
+    transition: 0.2s;
+}
+.menu-list a:hover { background-color: #21262d; border-color: #8b949e; }
+
+/* 演習画面用 */
+.scenario-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+.badge {
+    display: inline-block; padding: 2px 8px; font-size: 0.8rem;
+    border-radius: 12px; background: #21262d; border: 1px solid var(--border-color);
+    margin-bottom: 10px;
+}
+.terminal {
+    background-color: var(--console-bg); border: 1px solid var(--border-color);
+    border-radius: 6px; padding: 15px; font-family: 'Courier New', Courier, monospace;
+    margin-top: 15px;
+}
+.terminal-output {
+    min-height: 120px; max-height: 250px; overflow-y: auto;
+    margin-bottom: 10px; white-space: pre-wrap; line-height: 1.4;
+}
+.input-line { display: flex; align-items: center; }
+.prompt { color: var(--accent-color); font-weight: bold; margin-right: 8px; user-select: none; }
+.cmd-input {
+    background: transparent; border: none; color: #fff;
+    font-family: inherit; font-size: 1rem; flex-grow: 1; outline: none;
+}
+.success-msg { color: #56d364; font-weight: bold; }
+.error-msg { color: #f85149; }
+.info-msg { color: #8b949e; }
+.nav-links { margin-top: 20px; text-align: center; }
+.nav-links a { color: #58a6ff; text-decoration: none; }

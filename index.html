@@ -1,19 +1,283 @@
+html
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Git Master - 目次</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <h1>⚡ Git Master Training</h1>
-    <p class="subtitle">基礎から学ぶ対話型Gitチュートリアル</p>
+    <title>Java Memory Visualizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap');
 
-    <div class="container">
-        <ul class="menu-list">
-            <li><a href="lesson01.html">🌱 レッスン1: リポジトリの初期化 (git init / git log)</a></li>
-            </ul>
-    </div>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .code-font {
+            font-family: 'Fira Code', monospace;
+        }
+
+        /* Code Line Styles */
+        .line-unexecuted {
+            color: #d1d5db; /* Light Gray */
+        }
+        .line-current {
+            color: #ec4899; /* Pink */
+            font-weight: bold;
+            background-color: #fdf2f8;
+            border-left: 4px solid #ec4899;
+        }
+        .line-executed {
+            color: #1f2937; /* Black/Dark Gray */
+        }
+        .code-line {
+            padding: 4px 16px;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+
+        /* 3D Memory Box Styles */
+        .memory-container {
+            perspective: 1000px;
+        }
+        
+        .memory-box-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            opacity: 0;
+            transform: scale(0.8);
+        }
+
+        .memory-label {
+            font-family: 'Fira Code', monospace;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #4b5563;
+            margin-bottom: 0.5rem;
+            background: #e5e7eb;
+            padding: 0.25rem 1rem;
+            border-radius: 9999px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .memory-box {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #ffffff 0%, #f3f4f6 100%);
+            border-radius: 16px;
+            box-shadow: 
+                0 10px 15px -3px rgba(0, 0, 0, 0.1),
+                0 4px 6px -2px rgba(0, 0, 0, 0.05),
+                inset 0 2px 4px rgba(255, 255, 255, 0.8),
+                inset 0 -4px 6px rgba(0, 0, 0, 0.05);
+            border: 2px solid #e5e7eb;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            font-weight: bold;
+            color: #1f2937;
+            position: relative;
+            transform-style: preserve-preserve-3d;
+            transition: all 0.3s ease;
+        }
+
+        /* Value pop animation */
+        .value-pop {
+            animation: valuePop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes popIn {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes valuePop {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .empty-memory-text {
+            color: #9ca3af;
+            font-size: 1.125rem;
+            text-align: center;
+            font-style: italic;
+        }
+
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <header class="bg-white shadow-sm border-b border-gray-200 py-4 px-6 flex justify-between items-center z-10">
+        <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+            Java Step-by-Step Memory Visualizer
+        </h1>
+        <div class="text-sm text-gray-500 font-medium">
+            Step: <span id="step-counter" class="text-blue-600 font-bold text-lg">0</span> / 5
+        </div>
+    </header>
+
+    <main class="flex-1 flex overflow-hidden">
+        
+        <!-- Left Panel: Source Code -->
+        <section class="w-1/2 border-r border-gray-200 bg-gray-50 flex flex-col">
+            <div class="bg-gray-200 px-4 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider border-b border-gray-300">
+                Source Code (Main.java)
+            </div>
+            <div class="flex-1 overflow-auto p-4 code-font text-sm leading-relaxed" id="code-container">
+                <!-- Code lines will be injected here by JS -->
+            </div>
+        </section>
+
+        <!-- Right Panel: Memory Map -->
+        <section class="w-1/2 bg-white flex flex-col relative">
+            <div class="bg-gray-100 px-4 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider border-b border-gray-200 shadow-sm z-10">
+                Memory Map (Stack)
+            </div>
+            <!-- Grid pattern background for memory area -->
+            <div class="absolute inset-0 top-8 opacity-20" style="background-image: radial-gradient(#9ca3af 1px, transparent 1px); background-size: 20px 20px;"></div>
+            
+            <div class="flex-1 overflow-auto p-8 flex items-center justify-center relative z-20 memory-container" id="memory-panel">
+                <!-- Memory boxes will be injected here by JS -->
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10">
+        <div class="max-w-3xl mx-auto flex justify-center gap-6">
+            <button id="prevBtn" class="flex items-center justify-center gap-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-40">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                Prev
+            </button>
+            <button id="nextBtn" class="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed w-40">
+                Next
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </button>
+        </div>
+    </footer>
+
+    <script>
+        // State variables
+        let currentStep = 0;
+        
+        // Data definition
+        const sourceCode = [
+            "public class Main {",
+            "  public static void main(String[] args) {",
+            "    int a;",
+            "    a = 5;",
+            "  }",
+            "}"
+        ];
+        const maxSteps = sourceCode.length - 1;
+
+        // DOM Elements
+        const codeContainer = document.getElementById('code-container');
+        const memoryPanel = document.getElementById('memory-panel');
+        const stepCounter = document.getElementById('step-counter');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+
+        function renderCode() {
+            codeContainer.innerHTML = '';
+            
+            sourceCode.forEach((line, index) => {
+                const lineDiv = document.createElement('div');
+                lineDiv.className = 'code-line flex';
+                
+                // Determine styling based on step
+                if (index < currentStep) {
+                    lineDiv.classList.add('line-executed');
+                } else if (index === currentStep) {
+                    lineDiv.classList.add('line-current');
+                } else {
+                    lineDiv.classList.add('line-unexecuted');
+                }
+
+                // Add line number
+                const lineNum = document.createElement('span');
+                lineNum.className = 'w-8 inline-block text-right mr-4 opacity-50 select-none';
+                lineNum.textContent = index;
+                
+                // Add actual code text
+                const codeText = document.createElement('span');
+                codeText.className = 'whitespace-pre';
+                codeText.textContent = line;
+
+                lineDiv.appendChild(lineNum);
+                lineDiv.appendChild(codeText);
+                codeContainer.appendChild(lineDiv);
+            });
+        }
+
+        function renderMemory() {
+            memoryPanel.innerHTML = '';
+
+            if (currentStep < 2) {
+                // Steps 0 & 1: Empty memory
+                memoryPanel.innerHTML = '<div class="empty-memory-text">No variables initialized yet.</div>';
+            } else if (currentStep === 2) {
+                // Step 2: int a; (Empty box)
+                memoryPanel.innerHTML = `
+                    <div class="memory-box-wrapper">
+                        <div class="memory-label">int a</div>
+                        <div class="memory-box">
+                            <!-- Empty -->
+                        </div>
+                    </div>
+                `;
+            } else if (currentStep >= 3) {
+                // Step 3+: a = 5; (Box with value)
+                // Need to re-trigger animation for the value if we just arrived at step 3
+                const valueClass = currentStep === 3 ? 'value-pop' : '';
+                memoryPanel.innerHTML = `
+                    <div class="memory-box-wrapper" style="opacity: 1; transform: scale(1); animation: none;">
+                        <div class="memory-label bg-pink-100 text-pink-700">int a</div>
+                        <div class="memory-box border-pink-200 ring-4 ring-pink-100">
+                            <span class="${valueClass}">5</span>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function updateUI() {
+            // Update counter
+            stepCounter.textContent = currentStep;
+            
+            // Update buttons
+            prevBtn.disabled = currentStep === 0;
+            nextBtn.disabled = currentStep === maxSteps;
+
+            // Render panels
+            renderCode();
+            renderMemory();
+        }
+
+        prevBtn.addEventListener('click', () => {
+            if (currentStep > 0) {
+                currentStep--;
+                updateUI();
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentStep < maxSteps) {
+                currentStep++;
+                updateUI();
+            }
+        });
+
+        // Initialize UI on load
+        updateUI();
+
+    </script>
 </body>
 </html>
